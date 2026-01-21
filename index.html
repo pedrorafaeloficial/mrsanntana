@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. Sanntana | Barbearia de Luxo</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Configuração de Cores Personalizadas -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            400: '#D4AF37',
+                            500: '#C5A028',
+                            600: '#B49020',
+                        },
+                        dark: {
+                            900: '#0a0a0a',
+                            800: '#121212',
+                            700: '#1E1E1E'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['Cinzel', 'serif'],
+                        sans: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Efeitos Personalizados */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            background-color: #0a0a0a;
+            color: #f3f4f6;
+        }
+
+        .gold-text {
+            background: linear-gradient(to right, #D4AF37, #FFE5B4, #D4AF37);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-overlay {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.9));
+        }
+
+        /* Animação de Fade In */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Botão Pulsante */
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        }
+
+        .btn-pulse {
+            animation: pulse-gold 2s infinite;
+        }
+
+        /* Remove o cursor padrão no Canvas para desenharmos a navalha */
+        #gameCanvas {
+            cursor: none;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased overflow-x-hidden">
+
+    <!-- Áudio da Maquininha -->
+    <audio id="clipper-sound" src="https://www.soundjay.com/mechanical/sounds/electric-razor-1.mp3" preload="auto"></audio>
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 bg-dark-900/95 backdrop-blur-md border-b border-white/10 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center gap-3">
+                    <img src="/assets/images/logo.jpg" 
+                         alt="Mr. Sanntana Logo" 
+                         class="h-12 w-12 rounded-full border-2 border-gold-400 object-cover"
+                         onerror="this.src='https://via.placeholder.com/150/000000/D4AF37?text=MS'">
+                    <span class="font-serif text-xl font-bold text-white tracking-widest">MR. <span class="text-gold-400">SANNTANA</span></span>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="#home" class="hover:text-gold-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Início</a>
+                        <a href="#about" class="hover:text-gold-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">A Barbearia</a>
+                        <a href="#services" class="hover:text-gold-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Serviços</a>
+                        <a href="#gallery" class="hover:text-gold-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Galeria</a>
+                        <a href="#reviews" class="hover:text-gold-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Avaliações</a>
+                        <a href="#contact" class="hover:text-gold-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">Contato</a>
+                    </div>
+                </div>
+
+                <!-- CTA Button Desktop -->
+                <div class="hidden md:block">
+                    <a href="https://chat.inbarberapp.com/?id=e7fcdfa1-6169-44a0-aecb-8ddaf4577694" target="_blank" class="bg-gold-400 text-dark-900 px-6 py-2 rounded-sm font-bold hover:bg-white transition-all duration-300 btn-pulse">
+                        AGENDAR AGORA
+                    </a>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" onclick="toggleMobileMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-gold-400 hover:text-white hover:bg-gray-800 focus:outline-none transition-colors">
+                        <i id="mobile-menu-icon" class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div class="md:hidden hidden bg-black/95 backdrop-blur-xl border-t border-white/10 absolute w-full left-0 shadow-2xl" id="mobile-menu">
+            <div class="px-4 pt-4 pb-6 space-y-2 text-center">
+                <a href="#home" onclick="toggleMobileMenu()" class="text-gray-300 hover:text-gold-400 block px-3 py-3 rounded-md text-base font-medium transition-colors border-b border-white/5">Início</a>
+                <a href="#about" onclick="toggleMobileMenu()" class="text-gray-300 hover:text-gold-400 block px-3 py-3 rounded-md text-base font-medium transition-colors border-b border-white/5">A Barbearia</a>
+                <a href="#services" onclick="toggleMobileMenu()" class="text-gray-300 hover:text-gold-400 block px-3 py-3 rounded-md text-base font-medium transition-colors border-b border-white/5">Serviços</a>
+                <a href="#gallery" onclick="toggleMobileMenu()" class="text-gray-300 hover:text-gold-400 block px-3 py-3 rounded-md text-base font-medium transition-colors border-b border-white/5">Galeria</a>
+                <a href="#reviews" onclick="toggleMobileMenu()" class="text-gray-300 hover:text-gold-400 block px-3 py-3 rounded-md text-base font-medium transition-colors border-b border-white/5">Avaliações</a>
+                <a href="#contact" onclick="toggleMobileMenu()" class="text-gray-300 hover:text-gold-400 block px-3 py-3 rounded-md text-base font-medium transition-colors">Contato</a>
+                
+                <div class="pt-4">
+                    <a href="https://chat.inbarberapp.com/?id=e7fcdfa1-6169-44a0-aecb-8ddaf4577694" target="_blank" class="text-dark-900 bg-gold-400 hover:bg-white block w-full px-3 py-4 rounded-sm text-base font-bold transition-colors shadow-lg">
+                        AGENDAR HORÁRIO
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="relative h-screen flex items-center justify-center">
+        <!-- Background Image -->
+        <div class="absolute inset-0 z-0">
+            <img src="/assets/images/ambiente.webp" alt="Interior Barbearia" class="w-full h-full object-cover">
+            <div class="absolute inset-0 hero-overlay"></div>
+        </div>
+
+        <div class="relative z-10 text-center px-4 fade-in">
+            <p class="text-gold-400 tracking-[0.3em] text-sm md:text-base mb-4 uppercase font-bold">Estilo • Tradição • Excelência</p>
+            <h1 class="font-serif text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-tight">
+                MR. <span class="text-gold-400">SANNTANA</span>
+            </h1>
+            <p class="text-gray-300 max-w-2xl mx-auto text-lg mb-10 font-light">
+                Mais que um corte, uma experiência de luxo. Cuidado excepcional para o homem moderno.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://chat.inbarberapp.com/?id=e7fcdfa1-6169-44a0-aecb-8ddaf4577694" target="_blank" class="bg-gold-400 text-dark-900 px-8 py-4 rounded-sm font-bold hover:bg-white transition-all duration-300 shadow-lg hover:shadow-gold-400/50">
+                    AGENDAR HORÁRIO
+                </a>
+                <a href="#about" class="border border-white text-white px-8 py-4 rounded-sm font-bold hover:bg-white hover:text-dark-900 transition-all duration-300">
+                    CONHECER O ESPAÇO
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 bg-dark-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="relative fade-in">
+                    <div class="absolute -top-4 -left-4 w-24 h-24 border-t-4 border-l-4 border-gold-400 hidden md:block"></div>
+                    <img src="/assets/images/fachada.webp" alt="Fachada Mr Sanntana" class="w-full rounded-lg shadow-2xl grayscale hover:grayscale-0 transition-all duration-500 object-cover h-[500px]">
+                    <div class="absolute -bottom-4 -right-4 w-24 h-24 border-b-4 border-r-4 border-gold-400 hidden md:block"></div>
+                </div>
+                <div class="fade-in">
+                    <h2 class="font-serif text-4xl font-bold mb-6 text-white">A Arte de <span class="text-gold-400">Cuidar de Você</span></h2>
+                    <p class="text-gray-400 mb-6 leading-relaxed">
+                        Na Mr. Sanntana, acreditamos que a barbearia é um santuário. Localizados em um espaço exclusivo, oferecemos não apenas cortes precisos, mas um momento de relaxamento e renovação.
+                    </p>
+                    <p class="text-gray-400 mb-8 leading-relaxed">
+                        Nossa equipe é especializada em atender a todos os perfis, com destaque especial para o atendimento humanizado e inclusivo, garantindo que cada cliente, incluindo crianças com sensibilidade sensorial, receba o melhor tratamento possível.
+                    </p>
+                    <ul class="space-y-4 text-gray-300 mb-8">
+                        <li class="flex items-center"><i class="fas fa-check text-gold-400 mr-3"></i> Profissionais de Alta Performance</li>
+                        <li class="flex items-center"><i class="fas fa-check text-gold-400 mr-3"></i> Ambiente Climatizado e Confortável</li>
+                        <li class="flex items-center"><i class="fas fa-check text-gold-400 mr-3"></i> Atendimento Inclusivo e Personalizado</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-20 bg-dark-800 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16 fade-in">
+                <span class="text-gold-400 tracking-widest uppercase text-sm font-bold">Nosso Menu</span>
+                <h2 class="font-serif text-4xl text-white mt-2">Serviços Premium</h2>
+                <div class="w-24 h-1 bg-gold-400 mx-auto mt-4"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Service Cards -->
+                <!-- Cabelo -->
+                <div class="bg-dark-700 p-8 rounded-lg hover:bg-dark-900 border border-white/5 hover:border-gold-400/50 transition-all duration-300 group fade-in">
+                    <i class="fas fa-scissors text-3xl text-gold-400 mb-4 group-hover:scale-110 transition-transform"></i>
+                    <h3 class="text-xl font-serif text-white mb-2">Corte de Cabelo</h3>
+                    <p class="text-gray-400 text-sm">Do clássico ao moderno, executado com precisão e estilo.</p>
+                </div>
+
+                <div class="bg-dark-700 p-8 rounded-lg hover:bg-dark-900 border border-white/5 hover:border-gold-400/50 transition-all duration-300 group fade-in">
+                    <i class="fas fa-spray-can text-3xl text-gold-400 mb-4 group-hover:scale-110 transition-transform"></i>
+                    <h3 class="text-xl font-serif text-white mb-2">Relaxamento Capilar</h3>
+                    <p class="text-gray-400 text-sm">Tratamento para alinhar os fios e reduzir o volume.</p>
+                </div>
+
+                <div class="bg-dark-700 p-8 rounded-lg hover:bg-dark-900 border border-white/5 hover:border-gold-400/50 transition-all duration-300 group fade-in">
+                    <i class="fas fa-paint-brush text-3xl text-gold-400 mb-4 group-hover:scale-110 transition-transform"></i>
+                    <h3 class="text-xl font-serif text-white mb-2">Luzes & Camuflagem</h3>
+                    <p class="text-gray-400 text-sm">Técnicas modernas de coloração e disfarce de fios brancos.</p>
+                </div>
+
+                <!-- Barba -->
+                <div class="bg-dark-700 p-8 rounded-lg hover:bg-dark-900 border border-white/5 hover:border-gold-400/50 transition-all duration-300 group fade-in">
+                    <i class="fas fa-user-tie text-3xl text-gold-400 mb-4 group-hover:scale-110 transition-transform"></i>
+                    <h3 class="text-xl font-serif text-white mb-2">Barboterapia</h3>
+                    <p class="text-gray-400 text-sm">Ritual completo com toalha quente, hidratação e navalha.</p>
+                </div>
+
+                <div class="bg-dark-700 p-8 rounded-lg hover:bg-dark-900 border border-white/5 hover:border-gold-400/50 transition-all duration-300 group fade-in">
+                    <i class="fas fa-pump-soap text-3xl text-gold-400 mb-4 group-hover:scale-110 transition-transform"></i>
+                    <h3 class="text-xl font-serif text-white mb-2">Hidratação na Barba</h3>
+                    <p class="text-gray-400 text-sm">Fios macios, alinhados e com fragrância exclusiva.</p>
+                </div>
+
+                <!-- Face -->
+                <div class="bg-dark-700 p-8 rounded-lg hover:bg-dark-900 border border-white/5 hover:border-gold-400/50 transition-all duration-300 group fade-in">
+                    <i class="fas fa-spa text-3xl text-gold-400 mb-4 group-hover:scale-110 transition-transform"></i>
+                    <h3 class="text-xl font-serif text-white mb-2">Limpeza de Pele</h3>
+                    <p class="text-gray-400 text-sm">Renovação facial, remoção de impurezas e relaxamento.</p>
+                </div>
+            </div>
+            
+            <div class="mt-12 text-center">
+                <p class="text-gray-400 mb-6">Também oferecemos: Botox Capilar, Depilação Nasal/Orelhas e Sobrancelha.</p>
+                <a href="https://chat.inbarberapp.com/?id=e7fcdfa1-6169-44a0-aecb-8ddaf4577694" target="_blank" class="inline-block border border-gold-400 text-gold-400 hover:bg-gold-400 hover:text-dark-900 px-8 py-3 rounded-sm transition-all duration-300 font-bold uppercase tracking-wider">
+                    Ver Todos os Serviços
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="py-20 bg-black">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 fade-in">
+                <h2 class="font-serif text-4xl text-white">Nossos Resultados</h2>
+                <p class="text-gray-400 mt-2">A excelência está nos detalhes</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="relative group overflow-hidden h-80 fade-in cursor-pointer">
+                    <img src="/assets/images/cortes/corte1.jpg" alt="Corte Mr Sanntana" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                        <span class="text-gold-400 font-bold">Corte & Estilo</span>
+                    </div>
+                </div>
+                <div class="relative group overflow-hidden h-80 fade-in cursor-pointer">
+                    <img src="/assets/images/cortes/corte2.jpg" alt="Corte Mr Sanntana Detalhe" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                        <span class="text-gold-400 font-bold">Acabamento Perfeito</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section id="reviews" class="py-20 bg-dark-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 fade-in">
+                <i class="fas fa-star text-gold-400 text-2xl mb-2"></i>
+                <i class="fas fa-star text-gold-400 text-2xl mb-2"></i>
+                <i class="fas fa-star text-gold-400 text-2xl mb-2"></i>
+                <i class="fas fa-star text-gold-400 text-2xl mb-2"></i>
+                <i class="fas fa-star text-gold-400 text-2xl mb-2"></i>
+                <h2 class="font-serif text-4xl text-white mt-2">O Que Dizem Nossos Clientes</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Review 1 -->
+                <div class="bg-dark-900 p-8 rounded-lg relative fade-in">
+                    <i class="fas fa-quote-right absolute top-6 right-6 text-dark-700 text-4xl"></i>
+                    <p class="text-gray-300 italic mb-6 leading-relaxed">"Gente lugar maravilhoso.. Corto com ele desde antes da barbearia. Profissional e pessoa incrível.. E tenho um respeito ainda maior por esse cabra ele corta o cabelo do meu filho, sendo autista com sensibilidade de toque... Gratidão ❤️"</p>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-gold-400 rounded-full flex items-center justify-center font-bold text-dark-900">M</div>
+                        <div class="ml-4">
+                            <h4 class="text-white font-bold text-sm">Mauricio Barbosa</h4>
+                            <div class="text-gold-400 text-xs">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 2 -->
+                <div class="bg-dark-900 p-8 rounded-lg relative fade-in">
+                    <i class="fas fa-quote-right absolute top-6 right-6 text-dark-700 text-4xl"></i>
+                    <p class="text-gray-300 italic mb-6 leading-relaxed">"Ótimo atendimento, super recomendo e desejo parabéns por tanta dedicação, educação, calma, detalhes na hora do corte e muito mais. Além de todas essas qualidades tem excesso de profissionalismo."</p>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-gold-400 rounded-full flex items-center justify-center font-bold text-dark-900">R</div>
+                        <div class="ml-4">
+                            <h4 class="text-white font-bold text-sm">Robson Bezerra</h4>
+                            <div class="text-gold-400 text-xs">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 3 -->
+                <div class="bg-dark-900 p-8 rounded-lg relative fade-in">
+                    <i class="fas fa-quote-right absolute top-6 right-6 text-dark-700 text-4xl"></i>
+                    <p class="text-gray-300 italic mb-6 leading-relaxed">"Ótimo profissional, e os preço bem em conta, dando desconto quem faz barba e cabelo, sempre aberto e disponivel o estabelecimento assim facilitando a disponibilidade do cliente."</p>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-gold-400 rounded-full flex items-center justify-center font-bold text-dark-900">M</div>
+                        <div class="ml-4">
+                            <h4 class="text-white font-bold text-sm">Maicon Bordão</h4>
+                            <div class="text-gold-400 text-xs">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Game Section -->
+    <section id="game-section" class="py-20 bg-dark-900 border-t border-gold-400/30">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h2 class="font-serif text-3xl text-white mb-4">Desafio <span class="text-gold-400">Navalha de Ouro</span></h2>
+            <p class="text-gray-400 mb-8">Mostre que você tem mãos firmes! Passe a navalha em qualquer parte do fio para cortar.</p>
+            
+            <div class="relative bg-black rounded-lg border-2 border-gold-400 overflow-hidden shadow-2xl mx-auto touch-none" style="max-width: 600px; height: 400px; touch-action: none;">
+                <canvas id="gameCanvas" width="600" height="400" class="w-full h-full block"></canvas>
+                
+                <!-- UI Overlay Start -->
+                <div id="gameStartScreen" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20">
+                    <i class="fas fa-cut text-gold-400 text-5xl mb-4 animate-bounce"></i>
+                    <h3 class="text-gold-400 text-2xl font-bold mb-4 font-serif">PRONTO PARA CORTAR?</h3>
+                    <p class="text-gray-300 mb-6 px-4">Não deixe o cabelo ultrapassar o limite da tela!</p>
+                    <button onclick="startGame()" class="bg-gold-400 text-dark-900 px-8 py-3 rounded font-bold hover:scale-105 transition-transform hover:bg-white shadow-lg">
+                        INICIAR JOGO
+                    </button>
+                </div>
+                
+                <!-- UI Overlay Game Over -->
+                <div id="gameOverScreen" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-20 hidden">
+                    <h3 class="text-red-500 text-3xl font-bold mb-2 font-serif">FIM DE JOGO!</h3>
+                    <p class="text-white mb-4 text-xl">Sua Pontuação: <span id="finalScore" class="text-gold-400 font-bold">0</span></p>
+                    
+                    <!-- Cupom de Desconto -->
+                    <div class="bg-gold-400/10 p-6 rounded-lg border border-gold-400 mb-6 max-w-sm">
+                        <p class="text-white text-sm mb-2 uppercase tracking-wide">Desbloqueado:</p>
+                        <div class="border-dashed border-2 border-gold-400/50 p-2 mb-2 bg-black/50">
+                            <p class="text-gold-400 font-bold text-3xl tracking-widest font-serif">PRIMEIRO10</p>
+                        </div>
+                        <p class="text-gray-300 text-xs">10% OFF no seu primeiro corte. Apresente ao barbeiro!</p>
+                    </div>
+
+                    <button onclick="startGame()" class="bg-white text-dark-900 px-8 py-3 rounded font-bold hover:scale-105 transition-transform hover:bg-gold-400 shadow-lg">
+                        TENTAR NOVAMENTE
+                    </button>
+                </div>
+
+                <!-- HUD -->
+                <div class="absolute top-4 left-4 text-white font-mono text-xl z-10 pointer-events-none bg-black/50 px-3 py-1 rounded border border-white/10">
+                    Cortes: <span id="scoreDisplay" class="text-gold-400">0</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Location & Contact -->
+    <section id="contact" class="py-0 flex flex-col md:flex-row bg-dark-900">
+        <!-- Ajustado: Altura fixa de 450px no mobile (h-[450px]) e altura automática/minima no desktop -->
+        <div class="w-full md:w-1/2 h-[450px] md:h-auto md:min-h-[600px]">
+            <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3661.0287647498794!2d-46.533176624529176!3d-23.423328056535972!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94cef51489051229%3A0x995d0b1fad4eeae9!2sMr.sanntana%20Barbearia!5e0!3m2!1spt-BR!2sbr!4v1764040337485!5m2!1spt-BR!2sbr" 
+                width="100%" 
+                height="100%" 
+                style="border:0; filter: grayscale(1) invert(0.9) contrast(1.2);" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
+        <div class="w-full md:w-1/2 p-12 md:p-20 flex flex-col justify-center bg-dark-800">
+            <h2 class="font-serif text-3xl text-white mb-8">Informações de Contato</h2>
+            
+            <div class="space-y-6">
+                <div class="flex items-start">
+                    <i class="fas fa-map-marker-alt text-gold-400 text-xl mt-1 w-8"></i>
+                    <div>
+                        <h4 class="text-white font-bold uppercase tracking-wider text-sm">Localização</h4>
+                        <p class="text-gray-400">Guarulhos, SP</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start">
+                    <i class="fab fa-whatsapp text-gold-400 text-xl mt-1 w-8"></i>
+                    <div>
+                        <h4 class="text-white font-bold uppercase tracking-wider text-sm">WhatsApp</h4>
+                        <a href="https://wa.me/5511983099067" class="text-gray-400 hover:text-white transition-colors">
+                            (11) 98309-9067
+                        </a>
+                    </div>
+                </div>
+
+                <div class="flex items-start">
+                    <i class="fas fa-clock text-gold-400 text-xl mt-1 w-8"></i>
+                    <div>
+                        <h4 class="text-white font-bold uppercase tracking-wider text-sm">Horários</h4>
+                        <p class="text-gray-400">Seg - Qui: 08:00 - 20:00</p>
+                        <p class="text-gray-400">Sex - Sáb: 08:00 - 21:00</p>
+                        <p class="text-gray-400">Dom: 08:00 - 14:00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10">
+                <a href="https://chat.inbarberapp.com/?id=e7fcdfa1-6169-44a0-aecb-8ddaf4577694" class="w-full block text-center bg-gold-400 text-dark-900 py-4 font-bold rounded-sm hover:bg-white transition-all duration-300">
+                    AGENDAR VISITA
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black py-8 border-t border-gray-900">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+                <span class="font-serif text-lg font-bold text-white">MR. <span class="text-gold-400">SANNTANA</span></span>
+            </div>
+            <div class="text-gray-500 text-sm">
+                &copy; 2024 Mr. Sanntana Barbearia. Todos os direitos reservados.
+            </div>
+            <div class="flex space-x-4 mt-4 md:mt-0">
+                <a href="#" class="text-gray-400 hover:text-gold-400"><i class="fab fa-instagram text-xl"></i></a>
+                <a href="#" class="text-gray-400 hover:text-gold-400"><i class="fab fa-facebook text-xl"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/5511983099067" target="_blank" class="fixed bottom-6 right-6 bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-green-500 hover:scale-110 transition-all duration-300 z-50">
+        <i class="fab fa-whatsapp text-3xl"></i>
+    </a>
+
+    <!-- Scripts -->
+    <script>
+        // --- GAME LOGIC ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('gameStartScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        
+        let gameRunning = false;
+        let score = 0;
+        let hairs = [];
+        let animationFrame;
+        let difficultyMultiplier = 1;
+        
+        // Mouse/Touch position
+        let mouseX = -100;
+        let mouseY = -100;
+
+        // Configurações da Cabeça
+        const headX = 300; // Centro horizontal
+        const headY = 400; // Base da tela
+        const headRadius = 80;
+
+        // Classe de Cabelo
+        class Hair {
+            constructor() {
+                // Ângulo aleatório entre 180 (esquerda) e 360 (direita) no arco superior
+                this.angle = Math.PI + (Math.random() * Math.PI); 
+                this.length = 0;
+                this.maxLength = 250; // Comprimento máximo
+                // Velocidade de crescimento ajustada para iniciar mais devagar (aprox. 0.2 a 0.5 pixels/frame inicialmente)
+                this.growthSpeed = (0.2 + Math.random() * 0.3) * difficultyMultiplier;
+                
+                // Posição de origem na cabeça
+                this.startX = headX + Math.cos(this.angle) * headRadius;
+                this.startY = headY + Math.sin(this.angle) * headRadius;
+                
+                // Pontos de controle para curva (sem jitter aleatório para facilitar colisão)
+                // O controle "puxa" o cabelo levemente para fora ou para o lado dependendo do ângulo
+                this.cpX = this.startX + Math.cos(this.angle) * 100;
+                this.cpY = this.startY + Math.sin(this.angle) * 100;
+
+                // Cor do cabelo (variações de cinza/preto)
+                const shade = Math.floor(Math.random() * 100) + 50;
+                this.color = `rgb(${shade}, ${shade}, ${shade})`;
+                this.width = Math.random() * 3 + 2;
+            }
+
+            update() {
+                this.length += this.growthSpeed;
+                
+                // Recalcula o ponto final baseado no comprimento atual ao longo da curva quadrática
+                // Simplificação: Vamos assumir que o "t=1" da curva é o comprimento máximo (this.maxLength)
+                // Então o ponto atual é calculado com t = currentLength / maxLength
+                // Para simplificar a colisão e visualização, usamos vetores diretos
+                
+                // Ajuste: A curva "cresce". Vamos manter a geometria, mas o 't' final é proporcional ao length.
+                // Mas para colisão precisa, vamos definir que a curva é desenhada do start até um ponto T variável.
+                // Para facilitar: endX/Y são calculados baseados no comprimento linear estendido.
+            }
+
+            draw() {
+                // Calcular ponto final atual
+                const t = 1; // Usamos o length para definir o ponto final real abaixo
+                
+                // Ponto de destino teórico se estivesse reto no angulo
+                const destX = this.startX + Math.cos(this.angle) * this.length;
+                const destY = this.startY + Math.sin(this.angle) * this.length;
+                
+                // Curvatura: Puxa o meio do fio um pouco para dar efeito orgânico
+                const midX = (this.startX + destX) / 2 + Math.cos(this.angle + Math.PI/2) * (this.length * 0.1);
+                const midY = (this.startY + destY) / 2 + Math.sin(this.angle + Math.PI/2) * (this.length * 0.1);
+
+                // Salvamos os pontos para colisão
+                this.currentDestX = destX;
+                this.currentDestY = destY;
+                this.currentMidX = midX;
+                this.currentMidY = midY;
+
+                ctx.beginPath();
+                ctx.moveTo(this.startX, this.startY);
+                ctx.quadraticCurveTo(midX, midY, destX, destY);
+                
+                // Fica vermelho se perto do fim (80%)
+                ctx.strokeStyle = this.length > this.maxLength * 0.8 ? '#ef4444' : this.color; 
+                ctx.lineWidth = this.width;
+                ctx.stroke();
+            }
+
+            checkCut(mx, my) {
+                // Verifica colisão em vários pontos ao longo da curva (aproximação)
+                const steps = 10;
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    const invT = 1 - t;
+                    
+                    // Fórmula Quadratic Bezier: (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
+                    const x = (invT * invT * this.startX) + (2 * invT * t * this.currentMidX) + (t * t * this.currentDestX);
+                    const y = (invT * invT * this.startY) + (2 * invT * t * this.currentMidY) + (t * t * this.currentDestY);
+                    
+                    const dist = Math.hypot(mx - x, my - y);
+                    
+                    // Se a navalha tocar em qualquer ponto
+                    if (dist < 25) { 
+                        // Calcula o novo comprimento baseado onde cortou (t * comprimento atual)
+                        // Corta um pouco "antes" de onde tocou para dar satisfação
+                        const cutRatio = Math.max(0.1, t - 0.1); 
+                        
+                        // Se cortou muito perto da raiz (t < 0.2), remove o fio
+                        if (cutRatio < 0.2) {
+                            return { cut: true, remove: true };
+                        }
+                        
+                        // Se não, encurta o fio
+                        this.length = this.length * cutRatio;
+                        return { cut: true, remove: false };
+                    }
+                }
+                return { cut: false };
+            }
+        }
+
+        function drawRazor(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            // Rotaciona levemente a navalha para parecer que está segurando
+            ctx.rotate(-Math.PI / 4);
+
+            // Sombra
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 10;
+
+            // Cabo da Navalha
+            ctx.fillStyle = '#1f2937'; // Cinza escuro
+            ctx.fillRect(-5, 0, 10, 60);
+            
+            // Detalhe Dourado no Cabo
+            ctx.fillStyle = '#D4AF37';
+            ctx.fillRect(-3, 50, 6, 10);
+
+            // Lâmina (Metal)
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-15, -40); // Ponta da lâmina
+            ctx.lineTo(15, -40);
+            ctx.lineTo(0, 0);
+            ctx.fillStyle = '#e5e7eb'; // Prata
+            ctx.fill();
+            
+            // Fio da Lâmina (Brilho)
+            ctx.beginPath();
+            ctx.moveTo(-15, -40);
+            ctx.lineTo(15, -40);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Pino de articulação
+            ctx.beginPath();
+            ctx.arc(0, 0, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#9ca3af';
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function spawnHair() {
+            if (hairs.length < 30 + (score / 10)) { 
+                hairs.push(new Hair());
+            }
+        }
+
+        function updateGame() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Desenhar Cabeça
+            ctx.fillStyle = '#d1d5db'; 
+            ctx.beginPath();
+            ctx.arc(headX, headY, headRadius, Math.PI, 0);
+            ctx.fill();
+
+            // Desenhar Rosto
+            ctx.fillStyle = '#374151';
+            ctx.beginPath();
+            ctx.arc(headX - 30, headY - 40, 5, 0, Math.PI * 2); // Olho E
+            ctx.arc(headX + 30, headY - 40, 5, 0, Math.PI * 2); // Olho D
+            ctx.fill();
+            
+            ctx.beginPath();
+            if (score > 20) {
+                ctx.arc(headX, headY - 20, 20, 0, Math.PI); // Sorriso
+            } else {
+                ctx.moveTo(headX - 15, headY - 15); // Sério
+                ctx.lineTo(headX + 15, headY - 15);
+            }
+            ctx.stroke();
+
+
+            // Lógica dos Cabelos
+            if (Math.random() < 0.05 + (score * 0.002)) { 
+                spawnHair();
+            }
+
+            // Aumentar a dificuldade bem mais devagar
+            difficultyMultiplier = 1 + (score * 0.005);
+
+            for (let i = hairs.length - 1; i >= 0; i--) {
+                const hair = hairs[i];
+                // Velocidade de crescimento: Base (0.2 a 0.5) * Dificuldade
+                hair.growthSpeed = (0.2 + Math.random() * 0.3) * difficultyMultiplier;
+                hair.update();
+                hair.draw();
+
+                // Checar Corte
+                const result = hair.checkCut(mouseX, mouseY);
+                
+                if (result.cut) {
+                    // Adiciona score apenas se cortou uma quantidade significativa ou removeu
+                    // Pequeno cooldown visual ou faísca
+                    ctx.fillStyle = '#FFFF00';
+                    ctx.beginPath();
+                    ctx.arc(mouseX, mouseY, 5, 0, Math.PI*2);
+                    ctx.fill();
+                    
+                    if (result.remove) {
+                        hairs.splice(i, 1);
+                        score++;
+                        scoreDisplay.textContent = score;
+                    } else {
+                        // Se apenas aparou, ganha ponto a cada X aparadas ou chance menor
+                        // Para simplificar: ganha ponto sempre que interage utilmente
+                         if (Math.random() > 0.7) { 
+                             score++;
+                             scoreDisplay.textContent = score;
+                         }
+                    }
+                }
+
+                // Checar Game Over (se cresceu demais)
+                if (hair.length >= hair.maxLength) {
+                    gameOver();
+                }
+            }
+
+            // Desenhar a Navalha no cursor
+            drawRazor(mouseX, mouseY);
+
+            animationFrame = requestAnimationFrame(updateGame);
+        }
+
+        function startGame() {
+            gameRunning = true;
+            score = 0;
+            difficultyMultiplier = 1;
+            hairs = [];
+            scoreDisplay.textContent = '0';
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            
+            for(let i=0; i<10; i++) spawnHair();
+            
+            updateGame();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            cancelAnimationFrame(animationFrame);
+            finalScoreDisplay.textContent = score;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        // Event Listeners para o Canvas
+        const updateMousePos = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            mouseX = (e.clientX - rect.left) * scaleX;
+            mouseY = (e.clientY - rect.top) * scaleY;
+        };
+        
+        canvas.addEventListener('mousemove', updateMousePos);
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); 
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            mouseX = (touch.clientX - rect.left) * scaleX;
+            mouseY = (touch.clientY - rect.top) * scaleY;
+        }, { passive: false });
+
+
+        // --- SITE LOGIC (Existing) ---
+        window.addEventListener('load', () => {
+            const audio = document.getElementById('clipper-sound');
+            audio.volume = 0.4; 
+            const playPromise = audio.play();
+
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    const playOnInteraction = () => {
+                        audio.play();
+                        document.body.removeEventListener('click', playOnInteraction);
+                        document.body.removeEventListener('touchstart', playOnInteraction);
+                    };
+
+                    document.body.addEventListener('click', playOnInteraction);
+                    document.body.addEventListener('touchstart', playOnInteraction);
+                });
+            }
+        });
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const icon = document.getElementById('mobile-menu-icon');
+            
+            menu.classList.toggle('hidden');
+            
+            if (menu.classList.contains('hidden')) {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            } else {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            }
+        }
+
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.remove('bg-dark-900/95');
+                navbar.classList.add('bg-black/50', 'backdrop-blur-md', 'shadow-lg');
+            } else {
+                navbar.classList.remove('bg-black/50', 'shadow-lg');
+                navbar.classList.add('bg-dark-900/95'); 
+            }
+        });
+
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
